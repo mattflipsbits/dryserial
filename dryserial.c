@@ -1,5 +1,4 @@
-// TODO: Manually choose baud rate (parameter)
-//       Add write functionality
+// TODO: Add write functionality
 //       Functionize read/write
 
 
