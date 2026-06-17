@@ -1,3 +1,8 @@
+// TODO: Manually choose baud rate (parameter)
+//       Add write functionality
+//       Functionize read/write
+
+
 #include <ncurses.h>
 #include <stdlib.h>
 #include <fcntl.h>      
@@ -5,9 +10,6 @@
 #include <unistd.h>   
 #include <string.h>  
 #include <ctype.h>
-
-// Included in ncurses - left just in case 
-//  #include <stdio.h>
 
 #define STD_COLORS      (1)
 #define MAX_HUE         (1000)
@@ -63,7 +65,6 @@ int main(int argc, char* argv[]) {
     refresh();
 
     while (1) {
-        // Read data from the STM32
         static int i;
         static char ch;
 
