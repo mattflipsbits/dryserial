@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     }
 
     char* strPortError = "Error opening serial port";
-    char* strBaudError = "Invalid baud rate";
+    char* strBaudError = "Invalid baud rate\n";
     char* strConnect = "Connected:";
     char* strPort = argv[1];
     char* strBaud = argv[2];
@@ -47,7 +47,43 @@ int main(int argc, char* argv[]) {
     unsigned long rawBaud = strtoul(strBaud, &end, 10);
 
     if (!validBaud(rawBaud)) {
-        puts(strBaudError);
+        fprintf(stderr, "%s", strBaudError);
+        
+        unsigned long baudList[] = {
+            0,
+            50,
+            75,
+            110,
+            134,
+            150,
+            200,
+            300,
+            600,
+            1200,
+            1800,
+            2400,
+            4800,
+            9600,
+            19200,
+            38400,
+            57600,
+            115200,
+            230400,
+            460800,
+            500000,
+            576000,
+            921600,
+            1000000,
+            1152000,
+            1500000,
+            2000000,
+        };
+
+        puts("Valid baud rates:");
+
+        for (size_t i = 0; i < sizeof(baudList) / sizeof(unsigned long); i++) {
+            printf("%ld\n", baudList[i]);
+        }
 
         return 1;
     }
