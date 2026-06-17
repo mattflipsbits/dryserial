@@ -1,9 +1,9 @@
 #include <ncurses.h>
 #include <stdlib.h>
-#include <fcntl.h>      // For open()
-#include <termios.h>    // For terminal I/O configuration
-#include <unistd.h>     // For read(), write(), close()
-#include <string.h>     // For strlen()
+#include <fcntl.h>      
+#include <termios.h>   
+#include <unistd.h>   
+#include <string.h>  
 #include <ctype.h>
 
 // Included in ncurses - left just in case 
@@ -56,13 +56,6 @@ int main(int argc, char* argv[]) {
 
     configure_port(serial_port);
 
-/*
-    // Write data to the STM32
-    char *msg = "Hello STM32!\n";
-    write(serial_port, msg, strlen(msg));
-    printf("Sent: %s", msg);
-*/
-
     char buffer[BUFFER_SIZE];
     int bytes_read;
     
@@ -84,7 +77,7 @@ int main(int argc, char* argv[]) {
                     i = BUFFER_SIZE - 1;
                 }
 
-                buffer[i] = '\0';  // Null-terminate the received data
+                buffer[i] = '\0'; 
                 mvprintw(2, 0, "Received: %s", buffer);
                 i = 0;
             }
@@ -93,13 +86,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    // Close out the program
     endwin();
     close(serial_port);
     return 0;
 }
 
-// Function to configure the serial port
 int configure_port(int fd) {
     struct termios options;
 
