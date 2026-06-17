@@ -16,16 +16,45 @@
 
 #define BUFFER_SIZE     (256)
 
-int configure_port(int fd);
+int configure_port(int fd, unsigned long rawBaud);
+bool validBaud(unsigned long baud);
+speed_t convertBaud(unsigned long rawBaud);
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        printf("Usage: dryserial <port>\n");
-        printf("Example: dryserial /dev/ttyACM0\n");
+    if (argc < 3) {
+        printf("Usage: dryserial <port> <baud>\n");
+        printf("Example: dryserial /dev/ttyACM0 9600\n");
         
         return 1;
     }
 
+    char* strPortError = "Error opening serial port";
+    char* strBaudError = "Invalid baud rate";
+    char* strConnect = "Connected:";
+    char* strPort = argv[1];
+    char* strBaud = argv[2];
+
+    // Open the serial port
+    int serial_port = open(argv[1], O_RDWR | O_NOCTTY);
+    
+    if (serial_port == -1) {
+        perror(strPortError);
+        
+        return 1;
+    }
+
+    char* end = NULL;
+    unsigned long rawBaud = strtoul(strBaud, &end, 10);
+
+    if (!validBaud(rawBaud)) {
+        puts(strBaudError);
+
+        return 1;
+    }
+
+    configure_port(serial_port, rawBaud);
+    
+    // ncurses start
     initscr();
     cbreak();
     noecho();
@@ -37,26 +66,12 @@ int main(int argc, char* argv[]) {
         attr_set(A_NORMAL, STD_COLORS, NULL);
     }
 
-
-    char* strPortError = "Error opening serial port";
-    char* strConnect = "Connected:";
-    char* strPort = argv[1];
-
-    // Open the serial port
-    int serial_port = open(argv[1], O_RDWR | O_NOCTTY);
-    if (serial_port == -1) {
-        perror(strPortError);
-        
-        endwin();
-        return 1;
-    }
-
     mvprintw(5, 0, "serial_port: %d", serial_port);
     mvprintw(0, 0, "%s %s", strConnect, strPort);
+    refresh();
 
     getch();
 
-    configure_port(serial_port);
 
     char buffer[BUFFER_SIZE];
     int bytes_read;
@@ -92,14 +107,15 @@ int main(int argc, char* argv[]) {
     return 0;
 }
 
-int configure_port(int fd) {
+int configure_port(int fd, unsigned long rawBaud) {
     struct termios options;
+    speed_t baud = convertBaud(rawBaud);
 
     tcgetattr(fd, &options);  // Get current port settings
 
     // Set baud rate to 9600
-    cfsetispeed(&options, B9600);
-    cfsetospeed(&options, B9600);
+    cfsetispeed(&options, baud);
+    cfsetospeed(&options, baud);
 
     // Configure 8N1 mode (8 data bits, no parity, 1 stop bit)
     options.c_cflag &= ~PARENB;          // No parity
@@ -117,4 +133,131 @@ int configure_port(int fd) {
     tcsetattr(fd, TCSANOW, &options);    // Apply new settings immediately
 
     return 0;
+}
+
+bool validBaud(unsigned long baud) {
+    switch(baud) {
+        // Fall-through intended
+        case 0:
+        case 50:
+        case 75:
+        case 110:
+        case 134:
+        case 150:
+        case 200:
+        case 300:
+        case 600:
+        case 1200:
+        case 1800:
+        case 2400:
+        case 4800:
+        case 9600:
+        case 19200:
+        case 38400:
+        case 57600:
+        case 115200:
+        case 230400:
+        case 460800:
+        case 500000:
+        case 576000:
+        case 921600:
+        case 1000000:
+        case 1152000:
+        case 1500000:
+        case 2000000:
+            return true;
+            break;
+        default:
+            return false;
+            break;
+    }
+}
+
+speed_t convertBaud(unsigned long rawBaud) {
+    switch(rawBaud) {
+        case 0:
+            return B0;
+            break;
+        case 50:
+            return B50;
+            break;
+        case 75:
+            return B75;
+            break;
+        case 110:
+            return B110;
+            break;
+        case 134:
+            return B134;
+            break;
+        case 150:
+            return B150;
+            break;
+        case 200:
+            return B200;
+            break; 
+        case 300:
+            return B300;
+            break;
+        case 600:
+            return B600;
+            break;
+        case 1200:
+            return B1200;
+            break;
+        case 1800:
+            return B1800;
+            break;
+        case 2400:
+            return B2400;
+            break;
+        case 4800:
+            return B4800;
+            break;
+        case 9600:
+            return B9600;
+            break;
+        case 19200:
+            return B19200;
+            break;
+        case 38400:
+            return B38400;
+            break;
+        case 57600:
+            return B57600;
+            break;
+        case 115200:
+            return B115200;
+            break;
+        case 230400:
+            return B230400;
+            break;
+        case 460800:
+            return B460800;
+            break;
+        case 500000:
+            return B500000;
+            break;
+        case 576000:
+            return B576000;
+            break;
+        case 921600:
+            return B921600;
+            break;
+        case 1000000:
+            return B1000000;
+            break;
+        case 1152000:
+            return B1152000;
+            break;
+        case 1500000:
+            return B1500000;
+            break;
+        case 2000000:
+            return B2000000;
+            break;
+        default:
+            return -1;
+            break;
+    }
 }
