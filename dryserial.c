@@ -135,6 +135,14 @@ int main(int argc, char* argv[]) {
 
             refresh();
         }
+
+        /*
+             Write data
+
+             char *msg = "Hello STM32!\n";
+             write(serial_port, msg, strlen(msg));
+             printf("Sent: %s", msg);
+        */
     }
 
     endwin();
