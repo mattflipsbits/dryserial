@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
             1000000,
             1152000,
             1500000,
-            2000000,
+            2000000
         };
 
         puts("Valid baud rates:");
