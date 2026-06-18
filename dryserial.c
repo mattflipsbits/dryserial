@@ -1,28 +1,33 @@
 // TODO: Add write functionality
 //       Functionize read/write
 
-
-#include <ncurses.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <fcntl.h>      
 #include <termios.h>   
 #include <unistd.h>   
 #include <string.h>  
 #include <ctype.h>
 
-#define STD_COLORS      (1)
-#define MAX_HUE         (1000)
-
 #define BUFFER_SIZE     (256)
 
 int configure_port(int fd, unsigned long rawBaud);
-bool validBaud(unsigned long baud);
-speed_t convertBaud(unsigned long rawBaud);
+void list_bauds();
+bool valid_baud(unsigned long baud);
+speed_t convert_baud(unsigned long rawBaud);
 
 int main(int argc, char* argv[]) {
+    if (argc == 2 && !strcmp(argv[1], "-b")) {
+        list_bauds();
+
+        return 0;
+    }
+
     if (argc < 3) {
         printf("Usage: dryserial <port> <baud>\n");
         printf("Example: dryserial /dev/ttyACM0 9600\n");
+        printf("List of baud rates: dryserial -b\n");
         
         return 1;
     }
@@ -33,10 +38,9 @@ int main(int argc, char* argv[]) {
     char* strPort = argv[1];
     char* strBaud = argv[2];
 
-    // Open the serial port
-    int serial_port = open(argv[1], O_RDWR | O_NOCTTY);
+    int serialPort = open(argv[1], O_RDWR | O_NOCTTY);
     
-    if (serial_port == -1) {
+    if (serialPort == -1) {
         perror(strPortError);
         
         return 1;
@@ -45,82 +49,27 @@ int main(int argc, char* argv[]) {
     char* end = NULL;
     unsigned long rawBaud = strtoul(strBaud, &end, 10);
 
-    if (!validBaud(rawBaud)) {
+    if (!valid_baud(rawBaud)) {
         fprintf(stderr, "%s", strBaudError);
-        
-        unsigned long baudList[] = {
-            0,
-            50,
-            75,
-            110,
-            134,
-            150,
-            200,
-            300,
-            600,
-            1200,
-            1800,
-            2400,
-            4800,
-            9600,
-            19200,
-            38400,
-            57600,
-            115200,
-            230400,
-            460800,
-            500000,
-            576000,
-            921600,
-            1000000,
-            1152000,
-            1500000,
-            2000000
-        };
-
-        puts("Valid baud rates:");
-
-        for (size_t i = 0; i < sizeof(baudList) / sizeof(unsigned long); i++) {
-            printf("%ld\n", baudList[i]);
-        }
+        puts("For valid baud rates: dryserial -b");
 
         return 1;
     }
 
-    configure_port(serial_port, rawBaud);
+    configure_port(serialPort, rawBaud);
     
-    // ncurses start
-    initscr();
-    cbreak();
-    noecho();
-
-    if (has_colors()) {
-        start_color();
-        init_color(COLOR_BLACK, 0, 0, 0);
-        init_pair(STD_COLORS, COLOR_WHITE, COLOR_BLACK);
-        attr_set(A_NORMAL, STD_COLORS, NULL);
-    }
-
-    mvprintw(5, 0, "serial_port: %d", serial_port);
-    mvprintw(0, 0, "%s %s", strConnect, strPort);
-    refresh();
-
-    getch();
-
+    printf("%s %s\n", strConnect, strPort);
 
     char buffer[BUFFER_SIZE];
-    int bytes_read;
+    int bytesRead;
     
-    mvprintw(1, 0, "Begin spin cycle....");
-    refresh();
-
     while (1) {
         static int i;
         static char ch;
 
-        bytes_read = read(serial_port, &ch, 1);
+        bytesRead = read(serialPort, &ch, 1);
         
-        if (bytes_read > 0) {
+        if (bytesRead > 0) {
             buffer[i++] = ch;
 
             if (ch == '\n' || i >= BUFFER_SIZE - 1) {
@@ -129,30 +78,27 @@ int main(int argc, char* argv[]) {
                 }
 
                 buffer[i] = '\0'; 
-                mvprintw(2, 0, "Received: %s", buffer);
+                printf("Received: %s", buffer);
                 i = 0;
             }
-
-            refresh();
         }
 
         /*
              Write data
 
              char *msg = "Hello STM32!\n";
-             write(serial_port, msg, strlen(msg));
+             write(serialPort, msg, strlen(msg));
              printf("Sent: %s", msg);
         */
     }
 
-    endwin();
-    close(serial_port);
+    close(serialPort);
     return 0;
 }
 
 int configure_port(int fd, unsigned long rawBaud) {
     struct termios options;
-    speed_t baud = convertBaud(rawBaud);
+    speed_t baud = convert_baud(rawBaud);
 
     tcgetattr(fd, &options);  // Get current port settings
 
@@ -178,7 +124,48 @@ int configure_port(int fd, unsigned long rawBaud) {
     return 0;
 }
 
-bool validBaud(unsigned long baud) {
+// TODO: ALL the baud rate stuff can be done better (struct/hash map?)
+//       Works for now, though
+
+void list_bauds() {
+    unsigned long baudList[] = {
+        0,
+        50,
+        75,
+        110,
+        134,
+        150,
+        200,
+        300,
+        600,
+        1200,
+        1800,
+        2400,
+        4800,
+        9600,
+        19200,
+        38400,
+        57600,
+        115200,
+        230400,
+        460800,
+        500000,
+        576000,
+        921600,
+        1000000,
+        1152000,
+        1500000,
+        2000000
+    };
+
+    puts("Valid baud rates:");
+
+    for (size_t i = 0; i < sizeof(baudList) / sizeof(unsigned long); i++) {
+        printf("%ld\n", baudList[i]);
+    }
+}
+
+bool valid_baud(unsigned long baud) {
     switch(baud) {
         // Fall-through intended
         case 0:
@@ -216,7 +203,7 @@ bool validBaud(unsigned long baud) {
     }
 }
 
-speed_t convertBaud(unsigned long rawBaud) {
+speed_t convert_baud(unsigned long rawBaud) {
     switch(rawBaud) {
         case 0:
             return B0;
